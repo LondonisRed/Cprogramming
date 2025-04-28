@@ -1,72 +1,64 @@
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
-#include <stdbool.h>
+#include <ctype.h>
 
-void normalize_string(char *str) {
-    if (str == NULL) return;
+#define MAX_WORDS 500
+#define MAX_LENGTH 100
 
-    int len = strlen(str);
-    if (len == 0) return;
-
-    int start = 0;
-    while (start < len && isspace(str[start])) {
-        start++;
+int is_proper_name(char *word) {
+    if (isupper(word[0])) {
+        return 1;
     }
+    return 0;
+}
 
-    int end = len - 1;
-    while (end >= 0 && isspace(str[end])) {
-        end--;
-    }
-
-    if (start > end) {
-        str[0] = '\0';
-        return;
-    }
-
-    if (start > 0) {
-        memmove(str, str + start, end - start + 1);
-    }
-    str[end - start + 1] = '\0';
-    len = strlen(str);
-
-    int j = 0;
-    bool prev_space = false;
-    for (int i = 0; i < len; i++) {
-        if (str[i] == '\r' || str[i] == '\n') {
-            continue;
-        }
-        
-        if (isspace(str[i])) {
-            if (!prev_space) {
-                str[j++] = ' ';
-                prev_space = true;
-            }
-        } else {
-            str[j++] = str[i];
-            prev_space = false;
-        }
-    }
-    str[j] = '\0';
-    if (j > 0) {
-        str[0] = toupper(str[0]);
-    }
+int compare(const void *a, const void *b) {
+    return strcmp(*(const char **)a, *(const char **)b);
 }
 
 int main() {
-    char input[1000];
+    char text[MAX_WORDS * MAX_LENGTH];  
+    char *words[MAX_WORDS];  
+    int word_count = 0; 
+    char *delimiters = " ,.!?;:\n\t"; 
 
-    if (fgets(input, sizeof(input), stdin) == NULL) {
-        printf("EMPTY\n");
-        return 0;
+    // Đọc input vào
+    fgets(text, sizeof(text), stdin);
+
+    char *token = strtok(text, delimiters);
+    while (token != NULL) {
+        words[word_count++] = token;
+        token = strtok(NULL, delimiters);
     }
-    input[strcspn(input, "\n")] = '\0';
-    normalize_string(input);
 
-    if (strlen(input) == 0) {
+    char *proper_names[MAX_WORDS];
+    int proper_names_count = 0;
+
+    // Lọc các tên riêng
+    for (int i = 0; i < word_count; i++) {
+        if (is_proper_name(words[i])) {
+            int is_duplicate = 0;
+            for (int j = 0; j < proper_names_count; j++) {
+                if (strcmp(proper_names[j], words[i]) == 0) {
+                    is_duplicate = 1;
+                    break;
+                }
+            }
+            if (!is_duplicate) {
+                proper_names[proper_names_count++] = words[i];
+            }
+        }
+    }
+
+    if (proper_names_count == 0) {
         printf("EMPTY\n");
     } else {
-        printf("%s\n", input);
+        qsort(proper_names, proper_names_count, sizeof(char *), compare);
+        for (int i = 0; i < proper_names_count; i++) {
+            printf("%s ", proper_names[i]);
+        }
+        printf("\n");
     }
+
     return 0;
 }

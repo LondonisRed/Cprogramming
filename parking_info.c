@@ -1,71 +1,75 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
+#include <stdlib.h>
 
-#define MAX_PLATE_LENGTH 11
-#define MAX_VEHICLES 100
+#define MAX_LEN 1000
+#define PLATE_LEN 11
+
+void standaliseString(char* str) {
+    while (strlen(str) > 0 && (str[strlen(str) - 1] == '\r' || str[strlen(str) - 1] == '\n'))
+        str[strlen(str) - 1] = '\0';
+}
+
+void clearStdin() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {}
+}
 
 typedef struct {
-    char license_plate[MAX_PLATE_LENGTH];
-    bool is_parked;
-} Vehicle;
+    char plate[PLATE_LEN];
+    int status; 
+} Car;
 
 int main() {
-    Vehicle vehicles[MAX_VEHICLES];
-    int count = 0;
-    char input[20];
-    
+    Car cars[MAX_LEN];
+    int carCount = 0;
+
+    char plate[PLATE_LEN];
+    char datetime[20];
+    int type;
+
     while (1) {
-        fgets(input, sizeof(input), stdin);
-        input[strcspn(input, "\n")] = '\0'; 
-        
-        if (strcmp(input, "-1") == 0) {
+        fgets(plate, sizeof(plate), stdin);
+        standaliseString(plate);
+
+        if (strcmp(plate, "-1") == 0)
             break;
-        }
-        
-        fgets(input, sizeof(input), stdin);
-        
-        int type;
+
+        fgets(datetime, sizeof(datetime), stdin); 
+        standaliseString(datetime);
+
         scanf("%d", &type);
-        getchar(); 
- 
-        if (strlen(input) > 0) {
-            int found_index = -1;
-            for (int i = 0; i < count; i++) {
-                if (strcmp(vehicles[i].license_plate, input) == 0) {
-                    found_index = i;
-                    break;
-                }
+        clearStdin();
+
+        int found = 0;
+        for (int i = 0; i < carCount; ++i) {
+            if (strcmp(cars[i].plate, plate) == 0) {
+                if (type == 1)
+                    cars[i].status = 1;
+                else
+                    cars[i].status = 0;
+                found = 1;
+                break;
             }
-            
-            if (type == 1) {
-                if (found_index == -1) {
-                    strcpy(vehicles[count].license_plate, input);
-                    vehicles[count].is_parked = true;
-                    count++;
-                } else {
-                    vehicles[found_index].is_parked = true;
-                }
-            } else if (type == 0) { 
-                if (found_index != -1) {
-                    vehicles[found_index].is_parked = false;
-                }
-            }
+        }
+
+        if (!found) {
+            strcpy(cars[carCount].plate, plate);
+            cars[carCount].status = (type == 1) ? 1 : 0;
+            carCount++;
         }
     }
 
-    int parked_count = 0;
-    for (int i = 0; i < count; i++) {
-        if (vehicles[i].is_parked) {
-            parked_count++;
-        }
+    int inParking = 0;
+    for (int i = 0; i < carCount; ++i) {
+        if (cars[i].status == 1)
+            inParking++;
     }
-    
-    printf("%d\n", parked_count);
-    for (int i = 0; i < count; i++) {
-        if (vehicles[i].is_parked) {
-            printf("%s\n", vehicles[i].license_plate);
-        }
+
+    printf("%d\n", inParking);
+    for (int i = 0; i < carCount; ++i) {
+        if (cars[i].status == 1)
+            printf("%s\n", cars[i].plate);
     }
     return 0;
 }
